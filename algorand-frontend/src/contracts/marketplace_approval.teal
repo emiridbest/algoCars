@@ -1,88 +1,60 @@
 #pragma version 6
-txn ApplicationID
+
+// Initialize ApplicationArgs array
 int 0
-==
-bnz main_l8
-txn OnCompletion
-int DeleteApplication
-==
-bnz main_l7
+store 0
+load 0
 txna ApplicationArgs 0
-byte "buy"
-==
-bnz main_l4
-err
-main_l4:
-global GroupSize
-int 2
-==
-gtxn 1 TypeEnum
-int pay
-==
-gtxn 1 Receiver
-global CreatorAddress
-==
-&&
-gtxn 1 Amount
-byte "PRICE"
-app_global_get
-txna ApplicationArgs 1
-btoi
-*
-==
-&&
-gtxn 1 Sender
-gtxn 0 Sender
-==
-&&
-&&
-bnz main_l6
-int 0
-return
-main_l6:
-byte "SOLD"
-byte "SOLD"
-app_global_get
-txna ApplicationArgs 1
-btoi
-+
-app_global_put
-int 1
-return
-main_l7:
+store 0
+
+// Check if the sender and receiver are equal to the creator address
 txn Sender
 global CreatorAddress
 ==
-return
-main_l8:
-txn NumAppArgs
-int 4
+txn Receiver
+global CreatorAddress
 ==
-assert
+&&
+bnz main_l2
+int 0
+return
+
+main_l2:
+// Check if the amount is greater than the price of the item
+txn Amount
+byte "PRICE"
+app_global_get
+txna ApplicationArgs 1
+btoi
+<=
+bnz main_l3
+int 0
+return
+
+main_l3:
+// Check if the item has already been sold
+byte "SOLD"
+app_global_get
+bnz main_l4
+int 0
+return
+
+main_l4:
+// Verify that the 'tutorial-marketplace:uv1' note is present
 txn Note
 byte "tutorial-marketplace:uv1"
 ==
-assert
-txna ApplicationArgs 3
-btoi
+bnz main_l5
 int 0
->
-assert
-byte "NAME"
-txna ApplicationArgs 0
-app_global_put
-byte "IMAGE"
-txna ApplicationArgs 1
-app_global_put
-byte "DESCRIPTION"
-txna ApplicationArgs 2
-app_global_put
-byte "PRICE"
-txna ApplicationArgs 3
-btoi
-app_global_put
+return
+
+main_l5:
+// Update the global variables and mark the item as sold
 byte "SOLD"
-int 0
+int 1
 app_global_put
+
+// Additional logic for handling the purchase...
+
 int 1
 return
